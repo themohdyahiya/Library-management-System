@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Library Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0f0e0b; --surface:#1a1814; --surface2:#242118; --border:#2e2b24;
+  --gold:#c9a84c; --gold-light:#e8c87a; --gold-dim:#7a6530;
+  --text:#f0ead8; --text-muted:#8a8170; --text-dim:#5a5548;
+  --red:#c0392b; --green:#27ae60; --blue:#2980b9; --orange:#e67e22;
+  --sidebar-w:230px; --radius:8px; --t:.2s ease;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+.screen{display:none;}
+.screen.active{display:flex;flex-direction:column;min-height:100vh;}
+
+/* LOGIN */
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:radial-gradient(ellipse at 30% 40%,#1e1b10 0%,#0f0e0b 70%);}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:48px 40px;width:390px;box-shadow:0 24px 80px rgba(0,0,0,.6);animation:fadeUp .5s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.login-logo{text-align:center;margin-bottom:28px;}
+.login-logo .icon{font-size:40px;margin-bottom:10px;}
+.login-logo h1{font-family:'Playfair Display',serif;font-size:22px;color:var(--gold);line-height:1.3;}
+.login-logo p{color:var(--text-muted);font-size:12px;margin-top:4px;}
+.tab-row{display:flex;gap:8px;margin-bottom:22px;}
+.tab-btn{flex:1;padding:8px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;transition:var(--t);}
+.tab-btn.active{background:var(--gold);color:#000;border-color:var(--gold);font-weight:600;}
+.hint{color:var(--text-dim);font-size:11px;margin-top:14px;text-align:center;}
+
+/* FORMS */
+.form-group{margin-bottom:15px;}
+.form-group label{display:block;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 13px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;transition:border-color var(--t);outline:none;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--gold-dim);}
+.form-group input[readonly]{color:var(--text-muted);cursor:default;}
+.form-group select option{background:var(--surface2);}
+.form-group textarea{resize:vertical;min-height:70px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-grid .full{grid-column:1/-1;}
+.form-actions{display:flex;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border);}
+.note{font-size:10px;color:var(--text-dim);margin-left:4px;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:var(--radius);border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;transition:var(--t);}
+.btn-primary{background:var(--gold);color:#000;}.btn-primary:hover{background:var(--gold-light);}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}.btn-secondary:hover{border-color:var(--gold-dim);}
+.btn-success{background:var(--green);color:#fff;}.btn-success:hover{background:#229954;}
+.btn-full{width:100%;padding:11px;}
+
+/* RADIO / CHECKBOX */
+.radio-group,.check-group{display:flex;gap:16px;flex-wrap:wrap;padding:4px 0;}
+.radio-item,.check-item{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;}
+.radio-item input,.check-item input{accent-color:var(--gold);width:14px;height:14px;cursor:pointer;}
+
+/* ERRORS / INFO */
+.field-error{background:rgba(192,57,43,.13);border:1px solid rgba(192,57,43,.35);color:#e74c3c;border-radius:var(--radius);padding:9px 13px;font-size:13px;margin-top:10px;display:none;}
+.info-box{background:rgba(41,128,185,.1);border:1px solid rgba(41,128,185,.3);border-radius:var(--radius);padding:9px 13px;font-size:12px;color:#7fb3d3;margin-bottom:14px;}
+.warn-box{background:rgba(192,57,43,.1);border:1px solid rgba(192,57,43,.3);border-radius:var(--radius);padding:10px 14px;color:#e74c3c;font-weight:500;margin-bottom:14px;display:none;}
+
+/* APP LAYOUT */
+.app-layout{display:flex;flex:1;min-height:100vh;}
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto;}
+.sidebar-header{padding:18px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.app-name{font-family:'Playfair Display',serif;font-size:14px;color:var(--gold);line-height:1.4;}
+.user-badge{display:inline-block;margin-top:6px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:2px 10px;font-size:11px;color:var(--text-muted);}
+.sb-section{padding:6px 0;}
+.sb-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);padding:4px 16px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 16px;cursor:pointer;color:var(--text-muted);font-size:13px;transition:var(--t);border-left:2px solid transparent;}
+.nav-item:hover{color:var(--text);background:var(--surface2);}
+.nav-item.active{color:var(--gold);border-left-color:var(--gold);background:rgba(201,168,76,.07);}
+.nav-item .ni{font-size:14px;width:17px;text-align:center;}
+.sb-footer{margin-top:auto;padding:12px 16px;border-top:1px solid var(--border);}
+.logout-btn{display:flex;align-items:center;gap:8px;color:var(--text-muted);cursor:pointer;font-size:13px;padding:7px;border-radius:6px;transition:var(--t);}
+.logout-btn:hover{color:var(--red);background:rgba(192,57,43,.1);}
+.main-content{margin-left:var(--sidebar-w);flex:1;padding:26px 30px;min-height:100vh;}
+
+/* PAGES */
+.page{display:none;}
+.page.active{display:block;animation:fadeUp .3s ease;}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+.page-title{font-family:'Playfair Display',serif;font-size:22px;color:var(--gold);}
+.page-sub{color:var(--text-muted);font-size:12px;margin-top:2px;}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px;margin-bottom:18px;}
+.card-title{font-family:'Playfair Display',serif;font-size:15px;color:var(--gold);margin-bottom:14px;}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;border-radius:7px;}
+table{width:100%;border-collapse:collapse;}
+thead tr{border-bottom:2px solid var(--border);}
+th{text-align:left;padding:9px 13px;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);font-weight:500;}
+td{padding:10px 13px;border-bottom:1px solid var(--border);font-size:13px;}
+tbody tr:hover{background:rgba(255,255,255,.02);}
+tbody tr:last-child td{border-bottom:none;}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;}
+.bg{background:rgba(39,174,96,.15);color:#2ecc71;}
+.br{background:rgba(192,57,43,.15);color:#e74c3c;}
+.by{background:rgba(201,168,76,.15);color:var(--gold);}
+.bb{background:rgba(41,128,185,.15);color:#3498db;}
+.bo{background:rgba(230,126,34,.15);color:#e67e22;}
+
+/* STATS + MENU */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:14px;margin-bottom:22px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:16px 18px;}
+.stat-label{color:var(--text-muted);font-size:11px;margin-bottom:6px;}
+.stat-value{font-size:24px;font-family:'Playfair Display',serif;color:var(--gold);}
+.stat-sub{font-size:11px;color:var(--text-dim);margin-top:3px;}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:16px;}
+.menu-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 18px;cursor:pointer;transition:var(--t);text-align:center;}
+.menu-card:hover{border-color:var(--gold-dim);background:rgba(201,168,76,.05);transform:translateY(-2px);}
+.mc-icon{font-size:26px;margin-bottom:9px;}
+.mc-title{font-family:'Playfair Display',serif;color:var(--gold);font-size:14px;}
+.mc-sub{color:var(--text-muted);font-size:11px;margin-top:2px;}
+
+/* TOAST */
+#toast{position:fixed;bottom:22px;right:22px;z-index:500;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:12px 18px;min-width:260px;display:none;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.4);animation:fadeUp .3s ease;}
+#toast.show{display:flex;}
+
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--surface);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════ LOGIN ══════════════════════════════════ -->
+<div id="screen-login" class="screen active">
+<div class="login-wrap"><div class="login-card">
+  <div class="login-logo">
+    <div class="icon">📚</div>
+    <h1>Library Management<br>System</h1>
+    <p>Sign in to continue</p>
+  </div>
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="setLoginType('admin')">Admin Login</button>
+    <button class="tab-btn"        onclick="setLoginType('user')">User Login</button>
+  </div>
+  <div class="form-group">
+    <label>User ID</label>
+    <input type="text" id="login-id" placeholder="Enter User ID" autocomplete="off">
+  </div>
+  <div class="form-group">
+    <label>Password</label>
+    <input type="password" id="login-pwd" placeholder="Enter Password">
+  </div>
+  <button class="btn btn-primary btn-full" onclick="doLogin()">Login →</button>
+  <div class="field-error" id="login-err">Invalid credentials.</div>
+  <p class="hint">Admin: <b>adm</b> / <b>admin123</b> &nbsp;|&nbsp; User: <b>user</b> / <b>user123</b></p>
+</div></div>
+</div>
+
+<!-- ══════════════════════════════════ APP ══════════════════════════════════ -->
+<div id="screen-app" class="screen">
+<div class="app-layout">
+
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="app-name">📚 Library<br>Management</div>
+    <span class="user-badge" id="user-badge">User</span>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Home</div>
+    <div class="nav-item" onclick="showPage('home')"><span class="ni">🏠</span> Dashboard</div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Transactions</div>
+    <div class="nav-item" onclick="showPage('book-avail')"><span class="ni">🔍</span> Book Available</div>
+    <div class="nav-item" onclick="showPage('book-issue')"><span class="ni">📤</span> Issue Book</div>
+    <div class="nav-item" onclick="showPage('return-book')"><span class="ni">📥</span> Return Book</div>
+    <div class="nav-item" onclick="showPage('pay-fine')"><span class="ni">💰</span> Pay Fine</div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Reports</div>
+    <div class="nav-item" onclick="showPage('rpt-books')"><span class="ni">📋</span> Master – Books</div>
+    <div class="nav-item" onclick="showPage('rpt-movies')"><span class="ni">🎬</span> Master – Movies</div>
+    <div class="nav-item" onclick="showPage('rpt-members')"><span class="ni">👥</span> Memberships</div>
+    <div class="nav-item" onclick="showPage('rpt-active')"><span class="ni">📌</span> Active Issues</div>
+    <div class="nav-item" onclick="showPage('rpt-overdue')"><span class="ni">⚠️</span> Overdue Returns</div>
+    <div class="nav-item" onclick="showPage('rpt-requests')"><span class="ni">📝</span> Issue Requests</div>
+  </div>
+  <div class="sb-section" id="admin-nav">
+    <div class="sb-label">Maintenance</div>
+    <div class="nav-item" onclick="showPage('add-mem')"><span class="ni">➕</span> Add Membership</div>
+    <div class="nav-item" onclick="showPage('upd-mem')"><span class="ni">✏️</span> Update Membership</div>
+    <div class="nav-item" onclick="showPage('add-book')"><span class="ni">📗</span> Add Book / Movie</div>
+    <div class="nav-item" onclick="showPage('upd-book')"><span class="ni">🔄</span> Update Book / Movie</div>
+    <div class="nav-item" onclick="showPage('user-mgmt')"><span class="ni">👤</span> User Management</div>
+  </div>
+  <div class="sb-footer">
+    <div class="logout-btn" onclick="doLogout()"><span>🚪</span> Log Out</div>
+  </div>
+</aside>
+
+<main class="main-content">
+
+<!-- DASHBOARD -->
+<div class="page" id="page-home">
+  <div class="page-header">
+    <div><div class="page-title">Dashboard</div><div class="page-sub" id="home-greet"></div></div>
+  </div>
+  <div class="stats-grid" id="dash-stats"></div>
+  <div class="menu-grid"  id="dash-menu"></div>
+</div>
+
+<!-- BOOK AVAILABLE -->
+<div class="page" id="page-book-avail">
+  <div class="page-header">
+    <div><div class="page-title">Book Availability</div>
+    <div class="page-sub">At least one field (Name or Author) must be filled before searching</div></div>
+  </div>
+  <div class="card" style="max-width:640px;">
+    <div class="info-box">ℹ️ Fill in at least one field before submitting. If none selected, you will see an error on this page.</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Book / Movie Name</label>
+        <select id="ba-name"><option value="">— Select —</option></select>
+      </div>
+      <div class="form-group"><label>Author Name</label>
+        <select id="ba-author"><option value="">— All Authors —</option></select>
+      </div>
+    </div>
+    <div class="field-error" id="ba-err">Please select at least one field — Book Name or Author — before searching.</div>
+    <div style="display:flex;gap:10px;margin-top:12px;">
+      <button class="btn btn-primary" onclick="searchBooks()">🔍 Search</button>
+      <button class="btn btn-secondary" onclick="clearSearch()">Clear</button>
+    </div>
+  </div>
+  <div id="ba-results" style="display:none;">
+    <div class="card">
+      <div class="card-title">Search Results</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Author</th><th>Serial No</th><th>Category</th><th>Type</th><th>Available</th><th>Select to Issue</th></tr></thead>
+          <tbody id="ba-tbody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:14px;">
+        <button class="btn btn-primary" onclick="goIssueFromSearch()">📤 Issue Selected Book</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOOK ISSUE -->
+<div class="page" id="page-book-issue">
+  <div class="page-header">
+    <div><div class="page-title">Issue Book</div>
+    <div class="page-sub">All fields except Remarks are required</div></div>
+  </div>
+  <div class="card" style="max-width:560px;">
+    <div class="form-group">
+      <label>Book / Movie Name *</label>
+      <select id="iss-name" onchange="onIssNameChange()"><option value="">— Select Book / Movie —</option></select>
+    </div>
+    <div class="form-group">
+      <label>Author Name <span class="note">(auto-populated, non-editable)</span></label>
+      <input type="text" id="iss-author" readonly placeholder="Auto-populated">
+    </div>
+    <div class="form-group">
+      <label>Serial No <span class="note">(auto-populated)</span></label>
+      <input type="text" id="iss-serial" readonly placeholder="Auto-populated">
+    </div>
+    <div class="form-group">
+      <label>Membership ID *</label>
+      <select id="iss-member"><option value="">— Select Member —</option></select>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Issue Date * <span class="note">(not before today)</span></label>
+        <input type="date" id="iss-date" onchange="onIssDateChange()">
+      </div>
+      <div class="form-group">
+        <label>Return Date <span class="note">(auto 15 days, can be earlier)</span></label>
+        <input type="date" id="iss-ret">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Remarks <span class="note">(non-mandatory)</span></label>
+      <textarea id="iss-remarks" placeholder="Optional..."></textarea>
+    </div>
+    <div class="field-error" id="iss-err"></div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="submitIssue()">✅ Confirm Issue</button>
+      <button class="btn btn-secondary" onclick="showPage('home')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- RETURN BOOK -->
+<div class="page" id="page-return-book">
+  <div class="page-header">
+    <div><div class="page-title">Return Book</div>
+    <div class="page-sub">Confirm here, then proceed to Pay Fine page regardless of fine amount</div></div>
+  </div>
+  <div class="card" style="max-width:560px;">
+    <div class="form-group">
+      <label>Book / Movie Name *</label>
+      <select id="ret-name" onchange="onRetNameChange()"><option value="">— Select —</option></select>
+    </div>
+    <div class="form-group">
+      <label>Author Name <span class="note">(auto-populated, non-editable)</span></label>
+      <input type="text" id="ret-author" readonly placeholder="Auto-populated">
+    </div>
+    <div class="form-group">
+      <label>Serial No * <span class="note">(mandatory)</span></label>
+      <select id="ret-serial" onchange="onRetSerialChange()"><option value="">— Select Serial No —</option></select>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Issue Date <span class="note">(auto, non-editable)</span></label>
+        <input type="date" id="ret-iss-dt" readonly>
+      </div>
+      <div class="form-group">
+        <label>Return Date <span class="note">(can be edited earlier or later)</span></label>
+        <input type="date" id="ret-ret-dt">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Remarks <span class="note">(non-mandatory)</span></label>
+      <textarea id="ret-remarks" placeholder="Optional..."></textarea>
+    </div>
+    <div class="field-error" id="ret-err"></div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="submitReturn()">➡️ Confirm &amp; Go to Pay Fine</button>
+      <button class="btn btn-secondary" onclick="showPage('home')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAY FINE -->
+<div class="page" id="page-pay-fine">
+  <div class="page-header">
+    <div><div class="page-title">Pay Fine</div>
+    <div class="page-sub">All fields pre-filled except Fine Paid and Remarks</div></div>
+  </div>
+  <div class="card" style="max-width:560px;">
+    <div class="form-grid">
+      <div class="form-group"><label>Book / Movie Name</label><input type="text" id="pf-book" readonly></div>
+      <div class="form-group"><label>Author</label><input type="text" id="pf-author" readonly></div>
+      <div class="form-group"><label>Serial No</label><input type="text" id="pf-serial" readonly></div>
+      <div class="form-group"><label>Membership ID</label><input type="text" id="pf-member" readonly></div>
+      <div class="form-group"><label>Issue Date</label><input type="date" id="pf-iss-dt" readonly></div>
+      <div class="form-group"><label>Expected Return Date</label><input type="date" id="pf-exp-dt" readonly></div>
+      <div class="form-group">
+        <label>Actual Return Date</label>
+        <input type="date" id="pf-actual" onchange="recalcFine()">
+      </div>
+      <div class="form-group">
+        <label>Fine Calculated <span class="note">(₹10/day, default zero)</span></label>
+        <input type="text" id="pf-fine" readonly placeholder="₹0">
+      </div>
+    </div>
+    <div class="warn-box" id="pf-warn"></div>
+    <div class="form-group">
+      <label>Fine Paid <span class="note">(checked = yes / unchecked = no)</span></label>
+      <div class="check-group">
+        <label class="check-item"><input type="checkbox" id="pf-paid"> Mark as Fine Paid</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Remarks <span class="note">(non-mandatory)</span></label>
+      <textarea id="pf-remarks"></textarea>
+    </div>
+    <div class="field-error" id="pf-err"></div>
+    <div class="form-actions">
+      <button class="btn btn-success" onclick="submitFine()">✅ Complete Return</button>
+      <button class="btn btn-secondary" onclick="showPage('home')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- REPORT: BOOKS -->
+<div class="page" id="page-rpt-books">
+  <div class="page-header">
+    <div><div class="page-title">Master List of Books</div></div>
+    <input type="text" placeholder="🔍 Search…" style="padding:7px 12px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;width:210px;" oninput="filterTbl('rpt-bk-tb',this.value)">
+  </div>
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Serial No</th><th>Name</th><th>Author</th><th>Category</th><th>Status</th><th>Cost (₹)</th><th>Procured</th></tr></thead>
+    <tbody id="rpt-bk-tb"></tbody>
+  </table></div></div>
+</div>
+
+<!-- REPORT: MOVIES -->
+<div class="page" id="page-rpt-movies">
+  <div class="page-header">
+    <div><div class="page-title">Master List of Movies</div></div>
+    <input type="text" placeholder="🔍 Search…" style="padding:7px 12px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;width:210px;" oninput="filterTbl('rpt-mv-tb',this.value)">
+  </div>
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Serial No</th><th>Name</th><th>Director</th><th>Category</th><th>Status</th><th>Cost (₹)</th><th>Procured</th></tr></thead>
+    <tbody id="rpt-mv-tb"></tbody>
+  </table></div></div>
+</div>
+
+<!-- REPORT: MEMBERSHIPS -->
+<div class="page" id="page-rpt-members">
+  <div class="page-header">
+    <div><div class="page-title">List of Active Memberships</div></div>
+    <input type="text" placeholder="🔍 Search…" style="padding:7px 12px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;width:210px;" oninput="filterTbl('rpt-mem-tb',this.value)">
+  </div>
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>ID</th><th>Name</th><th>Contact</th><th>Aadhar No</th><th>Start</th><th>End</th><th>Status</th><th>Fine Pending</th></tr></thead>
+    <tbody id="rpt-mem-tb"></tbody>
+  </table></div></div>
+</div>
+
+<!-- REPORT: ACTIVE ISSUES -->
+<div class="page" id="page-rpt-active">
+  <div class="page-header"><div><div class="page-title">Active Issues</div></div></div>
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Serial No</th><th>Book / Movie</th><th>Membership ID</th><th>Issue Date</th><th>Return Date</th><th>Status</th></tr></thead>
+    <tbody id="rpt-act-tb"></tbody>
+  </table></div></div>
+</div>
+
+<!-- REPORT: OVERDUE -->
+<div class="page" id="page-rpt-overdue">
+  <div class="page-header"><div><div class="page-title">Overdue Returns</div></div></div>
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Serial No</th><th>Book / Movie</th><th>Membership ID</th><th>Issue Date</th><th>Due Date</th><th>Days Overdue</th><th>Fine (₹)</th></tr></thead>
+    <tbody id="rpt-ov-tb"></tbody>
+  </table></div></div>
+</div>
+
+<!-- REPORT: REQUESTS -->
+<div class="page" id="page-rpt-requests">
+  <div class="page-header"><div><div class="page-title">Issue Requests</div></div></div>
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Membership ID</th><th>Book / Movie</th><th>Requested Date</th><th>Fulfilled Date</th><th>Status</th></tr></thead>
+    <tbody id="rpt-req-tb"></tbody>
+  </table></div></div>
+</div>
+
+<!-- ADD MEMBERSHIP -->
+<div class="page" id="page-add-mem">
+  <div class="page-header"><div><div class="page-title">Add Membership</div><div class="page-sub">All fields mandatory</div></div></div>
+  <div class="card" style="max-width:620px;">
+    <div class="form-grid">
+      <div class="form-group"><label>First Name *</label><input type="text" id="am-fn" placeholder="First name"></div>
+      <div class="form-group"><label>Last Name *</label><input type="text" id="am-ln" placeholder="Last name"></div>
+      <div class="form-group"><label>Contact Number *</label><input type="tel" id="am-ph" placeholder="Mobile"></div>
+      <div class="form-group"><label>Aadhar Card No *</label><input type="text" id="am-aa" placeholder="xxxx-xxxx-xxxx"></div>
+      <div class="form-group full"><label>Contact Address *</label><textarea id="am-ad" style="min-height:54px;"></textarea></div>
+      <div class="form-group"><label>Start Date *</label><input type="date" id="am-sd" onchange="calcAmEnd()"></div>
+      <div class="form-group"><label>End Date <span class="note">(auto)</span></label><input type="date" id="am-ed" readonly></div>
+      <div class="form-group full">
+        <label>Membership Duration * <span class="note">(default: 6 months)</span></label>
+        <div class="radio-group">
+          <label class="radio-item"><input type="radio" name="am-dur" value="6"  checked onchange="calcAmEnd()"> 6 Months</label>
+          <label class="radio-item"><input type="radio" name="am-dur" value="12"        onchange="calcAmEnd()"> 1 Year</label>
+          <label class="radio-item"><input type="radio" name="am-dur" value="24"        onchange="calcAmEnd()"> 2 Years</label>
+        </div>
+      </div>
+    </div>
+    <div class="field-error" id="am-err"></div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="submitAddMem()">✅ Add Membership</button>
+      <button class="btn btn-secondary" onclick="resetAm()">Clear</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPDATE MEMBERSHIP -->
+<div class="page" id="page-upd-mem">
+  <div class="page-header"><div><div class="page-title">Update Membership</div><div class="page-sub">Membership Number mandatory — loads all fields</div></div></div>
+  <div class="card" style="max-width:540px;">
+    <div class="form-group">
+      <label>Membership Number * <span class="note">(mandatory)</span></label>
+      <div style="display:flex;gap:10px;">
+        <input type="text" id="um-id" placeholder="e.g. MEM001" style="flex:1;">
+        <button class="btn btn-secondary" onclick="loadMember()">Load →</button>
+      </div>
+    </div>
+    <div class="field-error" id="um-ld-err">Membership ID not found. Please check and try again.</div>
+    <div id="um-form" style="display:none;">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:12px 14px;margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">LOADED MEMBER</div>
+        <div id="um-info" style="font-size:13px;"></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>Current Start</label><input type="date" id="um-sd" readonly></div>
+        <div class="form-group"><label>Current End</label><input type="date" id="um-ed" readonly></div>
+        <div class="form-group full">
+          <label>Action *</label>
+          <div class="radio-group">
+            <label class="radio-item"><input type="radio" name="um-act" value="extend" checked onchange="toggleUmAct()"> Extend Membership</label>
+            <label class="radio-item"><input type="radio" name="um-act" value="cancel"        onchange="toggleUmAct()"> Cancel Membership</label>
+          </div>
+        </div>
+        <div class="form-group full" id="um-ext-row">
+          <label>Extend By * <span class="note">(default: 6 months)</span></label>
+          <div class="radio-group">
+            <label class="radio-item"><input type="radio" name="um-ext" value="6"  checked> 6 Months</label>
+            <label class="radio-item"><input type="radio" name="um-ext" value="12">         1 Year</label>
+            <label class="radio-item"><input type="radio" name="um-ext" value="24">         2 Years</label>
+          </div>
+        </div>
+      </div>
+      <div class="field-error" id="um-err"></div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="submitUpdMem()">✅ Update</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD BOOK / MOVIE -->
+<div class="page" id="page-add-book">
+  <div class="page-header"><div><div class="page-title">Add Book / Movie</div><div class="page-sub">All fields mandatory — error shown on page if incomplete</div></div></div>
+  <div class="card" style="max-width:560px;">
+    <div class="form-group">
+      <label>Type * <span class="note">(default: Book)</span></label>
+      <div class="radio-group">
+        <label class="radio-item"><input type="radio" name="ab-type" value="Book"  checked> 📗 Book</label>
+        <label class="radio-item"><input type="radio" name="ab-type" value="Movie">        🎬 Movie</label>
+      </div>
+    </div>
+    <div class="form-group"><label>Name *</label><input type="text" id="ab-name" placeholder="Title"></div>
+    <div class="form-group"><label>Author / Director *</label><input type="text" id="ab-auth" placeholder="Author or director"></div>
+    <div class="form-group">
+      <label>Category *</label>
+      <select id="ab-cat">
+        <option value="">— Select —</option>
+        <option>Science</option><option>Economics</option><option>Fiction</option>
+        <option>Children</option><option>Personal Development</option>
+      </select>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label>Cost (₹) *</label><input type="number" id="ab-cost" min="0" placeholder="0"></div>
+      <div class="form-group"><label>Quantity / Copies *</label><input type="number" id="ab-qty" min="1" value="1"></div>
+    </div>
+    <div class="form-group"><label>Date of Procurement *</label><input type="date" id="ab-dt"></div>
+    <div class="field-error" id="ab-err"></div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="submitAddBook()">✅ Add</button>
+      <button class="btn btn-secondary" onclick="resetAb()">Clear</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPDATE BOOK / MOVIE -->
+<div class="page" id="page-upd-book">
+  <div class="page-header"><div><div class="page-title">Update Book / Movie</div><div class="page-sub">All fields mandatory — error shown on page if incomplete</div></div></div>
+  <div class="card" style="max-width:560px;">
+    <div class="form-group">
+      <label>Type * <span class="note">(default: Book)</span></label>
+      <div class="radio-group">
+        <label class="radio-item"><input type="radio" name="ub-type" value="Book"  checked onchange="onUbType()"> 📗 Book</label>
+        <label class="radio-item"><input type="radio" name="ub-type" value="Movie"         onchange="onUbType()"> 🎬 Movie</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Book / Movie Name *</label>
+      <select id="ub-name" onchange="onUbName()"><option value="">— Select —</option></select>
+    </div>
+    <div id="ub-rest" style="display:none;">
+      <div class="form-group">
+        <label>Serial No *</label>
+        <select id="ub-serial"><option value="">— Select Serial No —</option></select>
+      </div>
+      <div class="form-group">
+        <label>Status *</label>
+        <select id="ub-status">
+          <option value="Available">Available</option>
+          <option value="Issued">Issued</option>
+          <option value="Damaged">Damaged</option>
+          <option value="Lost">Lost</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Date *</label><input type="date" id="ub-dt"></div>
+      <div class="field-error" id="ub-err"></div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="submitUpdBook()">✅ Update</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- USER MANAGEMENT -->
+<div class="page" id="page-user-mgmt">
+  <div class="page-header"><div><div class="page-title">User Management</div><div class="page-sub">Name is mandatory for all users</div></div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+    <div class="card">
+      <div class="form-group">
+        <label>Mode * <span class="note">(default: New User)</span></label>
+        <div class="radio-group">
+          <label class="radio-item"><input type="radio" name="umg-mode" value="new"      checked onchange="toggleUmgMode()"> New User</label>
+          <label class="radio-item"><input type="radio" name="umg-mode" value="existing"         onchange="toggleUmgMode()"> Existing User</label>
+        </div>
+      </div>
+      <div class="form-group" id="umg-ex-row" style="display:none;">
+        <label>Select Existing User</label>
+        <select id="umg-sel" onchange="loadUserEdit()"><option value="">— Select —</option></select>
+      </div>
+      <div class="form-group"><label>Name * <span class="note">(mandatory)</span></label><input type="text" id="umg-name" placeholder="Full name"></div>
+      <div class="form-group"><label>User ID *</label><input type="text" id="umg-uid" placeholder="Login ID"></div>
+      <div class="form-group"><label>Password *</label><input type="password" id="umg-pwd" placeholder="Password"></div>
+      <div class="form-group">
+        <label>Status <span class="note">(unchecked = inactive)</span></label>
+        <div class="check-group"><label class="check-item"><input type="checkbox" id="umg-active" checked> Active</label></div>
+      </div>
+      <div class="form-group">
+        <label>Role <span class="note">(unchecked = not admin)</span></label>
+        <div class="check-group"><label class="check-item"><input type="checkbox" id="umg-admin"> Admin</label></div>
+      </div>
+      <div class="field-error" id="umg-err"></div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="submitUserMgmt()">✅ Save User</button>
+        <button class="btn btn-secondary" onclick="resetUmg()">Clear</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">All Users</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>User ID</th><th>Name</th><th>Role</th><th>Status</th></tr></thead>
+        <tbody id="umg-tb"></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRMATION -->
+<div class="page" id="page-confirm">
+  <div style="display:flex;align-items:center;justify-content:center;min-height:65vh;">
+    <div class="card" style="max-width:460px;text-align:center;padding:44px 36px;">
+      <div style="font-size:52px;margin-bottom:14px;" id="conf-icon">✅</div>
+      <div class="page-title" style="margin-bottom:8px;" id="conf-title">Transaction Completed Successfully</div>
+      <p style="color:var(--text-muted);margin-bottom:22px;font-size:13px;" id="conf-msg"></p>
+      <button class="btn btn-primary" onclick="showPage('home')">← Back to Dashboard</button>
+    </div>
+  </div>
+</div>
+
+<!-- CANCELLED -->
+<div class="page" id="page-cancel">
+  <div style="display:flex;align-items:center;justify-content:center;min-height:65vh;">
+    <div class="card" style="max-width:460px;text-align:center;padding:44px 36px;">
+      <div style="font-size:52px;margin-bottom:14px;">❌</div>
+      <div class="page-title" style="margin-bottom:8px;">Transaction Cancelled</div>
+      <p style="color:var(--text-muted);margin-bottom:22px;font-size:13px;">No changes have been saved.</p>
+      <button class="btn btn-primary" onclick="showPage('home')">← Back to Dashboard</button>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+</div>
+
+<div id="toast"><span id="t-icon"></span><span id="t-text" style="font-size:13px;"></span></div>
+
+<script>
+// ══════════════ DATA ══════════════
+const db = {
+  users: [
+    {id:'adm',  pwd:'admin123', name:'Administrator', isAdmin:true,  active:true},
+    {id:'user', pwd:'user123',  name:'Library User',  isAdmin:false, active:true}
+  ],
+  books: [
+    {serial:'SC(B)000001',name:'The Theory of Everything', author:'Stephen Hawking',  cat:'Science',             type:'Book', status:'Available',cost:450,proc:'2022-01-15'},
+    {serial:'SC(B)000002',name:'The Theory of Everything', author:'Stephen Hawking',  cat:'Science',             type:'Book', status:'Available',cost:450,proc:'2022-01-15'},
+    {serial:'EC(B)000001',name:'Thinking Fast and Slow',   author:'Daniel Kahneman', cat:'Economics',           type:'Book', status:'Available',cost:599,proc:'2021-06-20'},
+    {serial:'EC(B)000002',name:'Thinking Fast and Slow',   author:'Daniel Kahneman', cat:'Economics',           type:'Book', status:'Issued',   cost:599,proc:'2021-06-20'},
+    {serial:'FC(B)000001',name:'The Alchemist',            author:'Paulo Coelho',     cat:'Fiction',             type:'Book', status:'Available',cost:250,proc:'2020-03-10'},
+    {serial:'FC(B)000002',name:'1984',                     author:'George Orwell',    cat:'Fiction',             type:'Book', status:'Available',cost:300,proc:'2020-07-25'},
+    {serial:'CH(B)000001',name:"Charlotte's Web",          author:'E.B. White',       cat:'Children',            type:'Book', status:'Available',cost:199,proc:'2023-02-14'},
+    {serial:'PD(B)000001',name:'Atomic Habits',            author:'James Clear',      cat:'Personal Development',type:'Book', status:'Available',cost:499,proc:'2022-11-01'},
+    {serial:'SC(M)000001',name:'A Beautiful Mind',         author:'Ron Howard',       cat:'Science',             type:'Movie',status:'Available',cost:350,proc:'2021-09-05'},
+    {serial:'FC(M)000001',name:'Inception',                author:'Christopher Nolan',cat:'Fiction',             type:'Movie',status:'Available',cost:400,proc:'2022-05-18'},
+    {serial:'FC(M)000002',name:'Interstellar',             author:'Christopher Nolan',cat:'Fiction',             type:'Movie',status:'Issued',   cost:400,proc:'2022-05-20'},
+  ],
+  members: [
+    {id:'MEM001',fn:'Rahul', ln:'Sharma',contact:'9876543210',addr:'12 MG Road, Lucknow',   aadhar:'1234-5678-9012',start:'2024-01-01',end:'2024-12-31',status:'Active',  fine:0},
+    {id:'MEM002',fn:'Priya', ln:'Verma', contact:'9988776655',addr:'45 Civil Lines, Lucknow',aadhar:'9876-5432-1098',start:'2024-03-01',end:'2025-02-28',status:'Active',  fine:0},
+    {id:'MEM003',fn:'Anil',  ln:'Kumar', contact:'9123456789',addr:'78 Hazratganj, Lucknow', aadhar:'1122-3344-5566',start:'2023-06-01',end:'2024-05-31',status:'Inactive',fine:50},
+  ],
+  issues: [
+    {serial:'EC(B)000002',name:'Thinking Fast and Slow',memberId:'MEM001',issDate:'2024-03-01',retDate:'2024-03-16',returned:false,remarks:''},
+    {serial:'FC(M)000002',name:'Interstellar',          memberId:'MEM002',issDate:'2024-02-20',retDate:'2024-03-06',returned:false,remarks:''},
+  ],
+  requests:[{memberId:'MEM003',name:'Atomic Habits',reqDate:'2024-03-10',fulDate:'2024-03-11',status:'Fulfilled'}],
+  retBuf:null
+};
+
+let CU=null, loginType='admin';
+
+// ══════════════ UTILS ══════════════
+const today=()=>new Date().toISOString().split('T')[0];
+const addDays=(d,n)=>{const dt=new Date(d);dt.setDate(dt.getDate()+n);return dt.toISOString().split('T')[0];};
+const addMonths=(d,m)=>{const dt=new Date(d);dt.setMonth(dt.getMonth()+m);return dt.toISOString().split('T')[0];};
+const gv=id=>document.getElementById(id).value.trim();
+const el=id=>document.getElementById(id);
+
+function setOpts(id,arr,ph){
+  const s=el(id); if(!s)return;
+  s.innerHTML=`<option value="">${ph}</option>`+arr.map(a=>`<option value="${a}">${a}</option>`).join('');
+}
+
+const bdg=(s,cls)=>`<span class="badge ${cls}">${s}</span>`;
+function bStatus(s){
+  const m={Available:'bg',Issued:'br',Active:'bg',Inactive:'br',Fulfilled:'bg',Pending:'by',Overdue:'br',Damaged:'bo',Lost:'br'};
+  return bdg(s,m[s]||'bb');
+}
+
+let toastT;
+function toast(icon,txt){
+  el('t-icon').textContent=icon; el('t-text').textContent=txt;
+  el('toast').classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>el('toast').classList.remove('show'),3500);
+}
+
+function showConfirm(icon,title,msg){
+  el('conf-icon').textContent=icon;
+  el('conf-title').textContent=title;
+  el('conf-msg').textContent=msg;
+  showPage('confirm');
+}
+
+function showErr(id,msg){const e=el(id);e.textContent=msg;e.style.display='block';}
+function hideErr(id){const e=el(id);if(e)e.style.display='none';}
+
+// ══════════════ AUTH ══════════════
+function setLoginType(t){
+  loginType=t;
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(i===0&&t==='admin')||(i===1&&t==='user')));
+}
+function doLogin(){
+  const uid=gv('login-id'),pwd=el('login-pwd').value;
+  hideErr('login-err');
+  const u=db.users.find(x=>x.id===uid&&x.pwd===pwd&&x.active);
+  if(!u){showErr('login-err','Invalid credentials. Please try again.');return;}
+  if(loginType==='admin'&&!u.isAdmin){showErr('login-err','This account does not have admin access.');return;}
+  if(loginType==='user'&&u.isAdmin){showErr('login-err','Please use Admin Login tab for admin accounts.');return;}
+  CU=u; launchApp();
+}
+function doLogout(){CU=null;el('login-id').value='';el('login-pwd').value='';hideErr('login-err');showScreen('login');}
+function showScreen(s){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));el('screen-'+s).classList.add('active');}
+
+function launchApp(){
+  showScreen('app');
+  el('user-badge').textContent=CU.isAdmin?'⚡ Admin':'👤 User';
+  el('home-greet').textContent=`Welcome, ${CU.name}`;
+  el('admin-nav').style.display=CU.isAdmin?'':'none';
+  rebuildDrops(); renderAllReports(); buildDash(); showPage('home');
+}
+
+// ══════════════ NAV ══════════════
+const pageInits={
+  'book-avail': initBA,
+  'book-issue': initIss,
+  'return-book':initRet,
+  'pay-fine':   initPF,
+  'rpt-books':  renderBooks,
+  'rpt-movies': renderMovies,
+  'rpt-members':renderMembers,
+  'rpt-active': renderActive,
+  'rpt-overdue':renderOverdue,
+  'rpt-requests':renderRequests,
+  'user-mgmt':  ()=>{renderUsers();el('umg-mode-new')&&(document.querySelector('input[name="umg-mode"][value="new"]').checked=true);toggleUmgMode();},
+  'upd-book':   ()=>{fillUbNames();el('ub-rest').style.display='none';el('ub-dt').value=today();},
+  'add-book':   ()=>{document.querySelector('input[name="ab-type"][value="Book"]').checked=true;},
+  'add-mem':    ()=>{document.querySelector('input[name="am-dur"][value="6"]').checked=true;},
+  'upd-mem':    ()=>{el('um-id').value='';el('um-form').style.display='none';hideErr('um-ld-err');hideErr('um-err');document.querySelector('input[name="um-act"][value="extend"]').checked=true;document.querySelector('input[name="um-ext"][value="6"]').checked=true;toggleUmAct();},
+  'user-mgmt':  ()=>{renderUsers();document.querySelector('input[name="umg-mode"][value="new"]').checked=true;toggleUmgMode();},
+};
+
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const pg=el('page-'+name);if(pg)pg.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+name+"'"))n.classList.add('active');});
+  if(pageInits[name])pageInits[name]();
+}
+
+// ══════════════ DROPDOWNS ══════════════
+function rebuildDrops(){
+  // Book Available
+  const allNames=[...new Set(db.books.map(b=>b.name))].sort();
+  const allAuthors=[...new Set(db.books.map(b=>b.author))].sort();
+  setOpts('ba-name',allNames,'— Select —');
+  setOpts('ba-author',allAuthors,'— All Authors —');
+
+  // Issue – only available books
+  const availNames=[...new Set(db.books.filter(b=>b.status==='Available').map(b=>b.name))].sort();
+  setOpts('iss-name',availNames,'— Select Book / Movie —');
+
+  // Return – only currently issued books
+  const issuedNames=[...new Set(db.issues.filter(i=>!i.returned).map(i=>i.name))].sort();
+  setOpts('ret-name',issuedNames,'— Select —');
+
+  // Members for issue
+  const actM=db.members.filter(m=>m.status==='Active');
+  const ism=el('iss-member');
+  ism.innerHTML=`<option value="">— Select Member —</option>`+actM.map(m=>`<option value="${m.id}">${m.id} – ${m.fn} ${m.ln}</option>`).join('');
+}
+
+// ══════════════ BOOK AVAILABLE ══════════════
+function initBA(){rebuildDrops();hideErr('ba-err');el('ba-results').style.display='none';}
+
+function searchBooks(){
+  const name=el('ba-name').value, auth=el('ba-author').value;
+  if(!name&&!auth){el('ba-err').style.display='block';return;}
+  hideErr('ba-err');
+  const res=db.books.filter(b=>(!name||b.name===name)&&(!auth||b.author===auth));
+  const tbody=el('ba-tbody');
+  tbody.innerHTML=res.length
+    ?res.map(b=>`<tr>
+        <td>${b.name}</td><td>${b.author}</td><td>${b.serial}</td>
+        <td>${b.cat}</td><td>${b.type}</td>
+        <td>${bStatus(b.status)}</td>
+        <td>${b.status==='Available'?`<input type="radio" name="ba-sel" value="${b.serial}" style="accent-color:var(--gold);width:15px;height:15px;cursor:pointer;">`:'—'}</td>
+      </tr>`).join('')
+    :`<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:18px;">No results found.</td></tr>`;
+  el('ba-results').style.display='block';
+}
+function clearSearch(){el('ba-name').value='';el('ba-author').value='';hideErr('ba-err');el('ba-results').style.display='none';}
+
+function goIssueFromSearch(){
+  const sel=document.querySelector('input[name="ba-sel"]:checked');
+  if(!sel){toast('⚠️','Please select a book using the radio button first.');return;}
+  const bk=db.books.find(b=>b.serial===sel.value);
+  showPage('book-issue');
+  setTimeout(()=>{el('iss-name').value=bk.name;onIssNameChange();},80);
+}
+
+// ══════════════ BOOK ISSUE ══════════════
+function initIss(){
+  rebuildDrops();
+  ['iss-author','iss-serial','iss-remarks'].forEach(id=>el(id).value='');
+  el('iss-name').value='';el('iss-member').value='';
+  hideErr('iss-err');
+  el('iss-date').value=today();
+  el('iss-date').min=today();
+  setIssRet();
+}
+function onIssNameChange(){
+  const name=el('iss-name').value;
+  const bk=db.books.find(b=>b.name===name&&b.status==='Available');
+  el('iss-author').value=bk?bk.author:'';
+  el('iss-serial').value=bk?bk.serial:'';
+}
+function onIssDateChange(){
+  if(el('iss-date').value<today())el('iss-date').value=today();
+  setIssRet();
+}
+function setIssRet(){
+  const d=el('iss-date').value||today();
+  const max=addDays(d,15);
+  el('iss-ret').value=max;
+  el('iss-ret').max=max;
+  el('iss-ret').min=d;
+}
+function submitIssue(){
+  const name=el('iss-name').value, serial=el('iss-serial').value;
+  const mem=el('iss-member').value, issD=el('iss-date').value, retD=el('iss-ret').value;
+  hideErr('iss-err');
+  if(!name){showErr('iss-err','Book / Movie Name is required.');return;}
+  if(!mem){showErr('iss-err','Membership ID is required.');return;}
+  if(!issD){showErr('iss-err','Issue Date is required.');return;}
+  if(issD<today()){showErr('iss-err','Issue Date cannot be before today.');return;}
+  if(retD>addDays(issD,15)){showErr('iss-err','Return Date cannot exceed 15 days from Issue Date.');return;}
+  if(retD<issD){showErr('iss-err','Return Date cannot be before Issue Date.');return;}
+  const bk=db.books.find(b=>b.serial===serial);
+  if(bk)bk.status='Issued';
+  db.issues.push({serial,name,memberId:mem,issDate:issD,retDate:retD,returned:false,remarks:el('iss-remarks').value});
+  db.requests.push({memberId:mem,name,reqDate:issD,fulDate:issD,status:'Fulfilled'});
+  rebuildDrops();renderAllReports();buildDash();
+  showConfirm('✅','Book Issued Successfully',`"${name}" issued to ${mem} — return by ${retD}.`);
+}
+
+// ══════════════ RETURN BOOK ══════════════
+function initRet(){
+  rebuildDrops();
+  ['ret-author','ret-iss-dt','ret-ret-dt','ret-remarks'].forEach(id=>el(id).value='');
+  el('ret-name').value='';
+  el('ret-serial').innerHTML='<option value="">— Select Serial No —</option>';
+  hideErr('ret-err');
+}
+function onRetNameChange(){
+  const name=el('ret-name').value;
+  if(!name){el('ret-author').value='';el('ret-serial').innerHTML='<option value="">— Select Serial No —</option>';return;}
+  const bk=db.books.find(b=>b.name===name);
+  el('ret-author').value=bk?bk.author:'';
+  const issd=db.issues.filter(i=>i.name===name&&!i.returned);
+  el('ret-serial').innerHTML=`<option value="">— Select Serial No —</option>`+issd.map(i=>`<option value="${i.serial}">${i.serial}</option>`).join('');
+  el('ret-iss-dt').value='';el('ret-ret-dt').value='';
+}
+function onRetSerialChange(){
+  const serial=el('ret-serial').value;if(!serial)return;
+  const iss=db.issues.find(i=>i.serial===serial&&!i.returned);
+  if(iss){el('ret-iss-dt').value=iss.issDate;el('ret-ret-dt').value=iss.retDate;}
+}
+function submitReturn(){
+  const name=el('ret-name').value, serial=el('ret-serial').value, retD=el('ret-ret-dt').value;
+  hideErr('ret-err');
+  if(!name){showErr('ret-err','Book / Movie Name is required.');return;}
+  if(!serial){showErr('ret-err','Serial No is a mandatory field.');return;}
+  if(!retD){showErr('ret-err','Return Date is required.');return;}
+  const iss=db.issues.find(i=>i.serial===serial&&!i.returned);
+  db.retBuf={serial,name,author:el('ret-author').value,issDate:el('ret-iss-dt').value,retDate:retD,memberId:iss?iss.memberId:'',remarks:el('ret-remarks').value};
+  showPage('pay-fine');
+}
+
+// ══════════════ PAY FINE ══════════════
+function initPF(){
+  if(!db.retBuf)return;
+  const r=db.retBuf;
+  el('pf-book').value=r.name; el('pf-author').value=r.author;
+  el('pf-serial').value=r.serial; el('pf-member').value=r.memberId;
+  el('pf-iss-dt').value=r.issDate; el('pf-exp-dt').value=r.retDate;
+  el('pf-actual').value=today();
+  el('pf-paid').checked=false; el('pf-remarks').value='';
+  hideErr('pf-err'); recalcFine();
+}
+function recalcFine(){
+  const expDt=el('pf-exp-dt').value, actDt=el('pf-actual').value||today();
+  const days=Math.max(0,Math.ceil((new Date(actDt)-new Date(expDt))/86400000));
+  const fine=days*10;
+  el('pf-fine').value=fine>0?`₹${fine}  (${days} day${days>1?'s':''} × ₹10)`:'₹0  (No fine due)';
+  const w=el('pf-warn');
+  if(fine>0){w.textContent=`⚠️ Fine of ₹${fine} is due. You must check "Fine Paid" before completing the return.`;w.style.display='block';}
+  else w.style.display='none';
+  return fine;
+}
+function submitFine(){
+  const fine=recalcFine(), paid=el('pf-paid').checked;
+  hideErr('pf-err');
+  if(fine>0&&!paid){showErr('pf-err','There is a pending fine. Please mark "Fine Paid" before completing the return. Book cannot be returned until this is done.');return;}
+  const serial=el('pf-serial').value;
+  const iss=db.issues.find(i=>i.serial===serial&&!i.returned);
+  if(iss)iss.returned=true;
+  const bk=db.books.find(b=>b.serial===serial);
+  if(bk)bk.status='Available';
+  db.retBuf=null;
+  rebuildDrops();renderAllReports();buildDash();
+  showConfirm('✅','Return Completed Successfully',`"${el('pf-book').value}" returned successfully.${fine>0?` Fine of ₹${fine} collected.`:''}`);
+}
+
+// ══════════════ REPORTS ══════════════
+function renderAllReports(){renderBooks();renderMovies();renderMembers();renderActive();renderOverdue();renderRequests();}
+
+const empty=(cols,msg)=>`<tr><td colspan="${cols}" style="text-align:center;color:var(--text-muted);padding:18px;">${msg}</td></tr>`;
+
+function renderBooks(){
+  const rows=db.books.filter(b=>b.type==='Book');
+  el('rpt-bk-tb').innerHTML=rows.length?rows.map(b=>`<tr><td>${b.serial}</td><td>${b.name}</td><td>${b.author}</td><td>${b.cat}</td><td>${bStatus(b.status)}</td><td>₹${b.cost}</td><td>${b.proc}</td></tr>`).join(''):empty(7,'No books found.');
+}
+function renderMovies(){
+  const rows=db.books.filter(b=>b.type==='Movie');
+  el('rpt-mv-tb').innerHTML=rows.length?rows.map(b=>`<tr><td>${b.serial}</td><td>${b.name}</td><td>${b.author}</td><td>${b.cat}</td><td>${bStatus(b.status)}</td><td>₹${b.cost}</td><td>${b.proc}</td></tr>`).join(''):empty(7,'No movies found.');
+}
+function renderMembers(){
+  el('rpt-mem-tb').innerHTML=db.members.map(m=>`<tr><td>${m.id}</td><td>${m.fn} ${m.ln}</td><td>${m.contact}</td><td>${m.aadhar}</td><td>${m.start}</td><td>${m.end}</td><td>${bStatus(m.status)}</td><td>${m.fine>0?bdg('₹'+m.fine,'br'):bdg('Nil','bg')}</td></tr>`).join('');
+}
+function renderActive(){
+  const rows=db.issues.filter(i=>!i.returned);
+  el('rpt-act-tb').innerHTML=rows.length?rows.map(i=>`<tr><td>${i.serial}</td><td>${i.name}</td><td>${i.memberId}</td><td>${i.issDate}</td><td>${i.retDate}</td><td>${bStatus(i.retDate<today()?'Overdue':'Issued')}</td></tr>`).join(''):empty(6,'No active issues.');
+}
+function overdueList(){return db.issues.filter(i=>!i.returned&&i.retDate<today());}
+function renderOverdue(){
+  const rows=overdueList();
+  el('rpt-ov-tb').innerHTML=rows.length?rows.map(i=>{const d=Math.ceil((new Date(today())-new Date(i.retDate))/86400000);return`<tr><td>${i.serial}</td><td>${i.name}</td><td>${i.memberId}</td><td>${i.issDate}</td><td>${i.retDate}</td><td>${bdg(d+' day'+(d>1?'s':''),'br')}</td><td>₹${d*10}</td></tr>`;}).join(''):empty(7,'🎉 No overdue returns!');
+}
+function renderRequests(){
+  el('rpt-req-tb').innerHTML=db.requests.length?db.requests.map(r=>`<tr><td>${r.memberId}</td><td>${r.name}</td><td>${r.reqDate}</td><td>${r.fulDate||'—'}</td><td>${bStatus(r.status)}</td></tr>`).join(''):empty(5,'No requests.');
+}
+function filterTbl(id,q){document.getElementById(id).querySelectorAll('tr').forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q.toLowerCase())?'':'none';});}
+
+// ══════════════ ADD MEMBERSHIP ══════════════
+function calcAmEnd(){const d=el('am-sd').value;if(!d)return;const m=parseInt(document.querySelector('input[name="am-dur"]:checked').value);el('am-ed').value=addMonths(d,m);}
+function resetAm(){['am-fn','am-ln','am-ph','am-aa','am-ad','am-sd','am-ed'].forEach(id=>el(id).value='');hideErr('am-err');document.querySelector('input[name="am-dur"][value="6"]').checked=true;}
+function submitAddMem(){
+  const fn=gv('am-fn'),ln=gv('am-ln'),ph=gv('am-ph'),aa=gv('am-aa'),ad=gv('am-ad'),sd=gv('am-sd');
+  hideErr('am-err');
+  if(!fn||!ln||!ph||!aa||!ad||!sd){showErr('am-err','All fields are mandatory. Please complete the form before submitting.');return;}
+  const m=parseInt(document.querySelector('input[name="am-dur"]:checked').value);
+  const id='MEM'+String(db.members.length+1).padStart(3,'0');
+  db.members.push({id,fn,ln,contact:ph,addr:ad,aadhar:aa,start:sd,end:addMonths(sd,m),status:'Active',fine:0});
+  renderMembers();rebuildDrops();toast('✅',`Membership ${id} created for ${fn} ${ln}.`);resetAm();showPage('rpt-members');
+}
+
+// ══════════════ UPDATE MEMBERSHIP ══════════════
+function loadMember(){
+  const id=gv('um-id').toUpperCase();
+  const m=db.members.find(x=>x.id===id);
+  hideErr('um-ld-err');el('um-form').style.display='none';
+  if(!m){el('um-ld-err').style.display='block';return;}
+  el('um-sd').value=m.start;el('um-ed').value=m.end;
+  el('um-info').innerHTML=`<strong>${m.fn} ${m.ln}</strong> &nbsp;|&nbsp; ${m.contact} &nbsp;|&nbsp; Status: ${bStatus(m.status)}`;
+  el('um-form').style.display='block';hideErr('um-err');
+}
+function toggleUmAct(){const a=document.querySelector('input[name="um-act"]:checked').value;el('um-ext-row').style.display=a==='extend'?'':'none';}
+function submitUpdMem(){
+  const id=gv('um-id').toUpperCase();const m=db.members.find(x=>x.id===id);
+  hideErr('um-err');if(!m){showErr('um-err','Member not found.');return;}
+  const act=document.querySelector('input[name="um-act"]:checked').value;
+  if(act==='cancel'){m.status='Inactive';toast('✅',`Membership ${id} cancelled.`);}
+  else{const mo=parseInt(document.querySelector('input[name="um-ext"]:checked').value);m.end=addMonths(m.end,mo);el('um-ed').value=m.end;toast('✅',`Membership ${id} extended by ${mo} months.`);}
+  el('um-info').innerHTML=`<strong>${m.fn} ${m.ln}</strong> &nbsp;|&nbsp; ${m.contact} &nbsp;|&nbsp; Status: ${bStatus(m.status)}`;
+  renderMembers();rebuildDrops();
+}
+
+// ══════════════ ADD BOOK ══════════════
+function resetAb(){['ab-name','ab-auth','ab-cost'].forEach(id=>el(id).value='');el('ab-qty').value='1';el('ab-cat').value='';el('ab-dt').value='';hideErr('ab-err');document.querySelector('input[name="ab-type"][value="Book"]').checked=true;}
+function submitAddBook(){
+  const type=document.querySelector('input[name="ab-type"]:checked').value;
+  const name=gv('ab-name'),auth=gv('ab-auth'),cat=gv('ab-cat'),cost=gv('ab-cost'),qty=parseInt(gv('ab-qty'))||1,dt=gv('ab-dt');
+  hideErr('ab-err');
+  if(!name||!auth||!cat||!cost||!dt){showErr('ab-err','All fields are mandatory. Please complete the form before submitting.');return;}
+  const pfx=cat.substring(0,2).toUpperCase()+'('+(type==='Book'?'B':'M')+')';
+  const ex=db.books.filter(b=>b.serial.startsWith(pfx)).length;
+  for(let i=0;i<qty;i++)db.books.push({serial:pfx+String(ex+i+1).padStart(6,'0'),name,author:auth,cat,type,status:'Available',cost:parseFloat(cost),proc:dt});
+  renderBooks();renderMovies();rebuildDrops();buildDash();
+  toast('✅',`${qty} copy/copies of "${name}" added.`);resetAb();
+}
+
+// ══════════════ UPDATE BOOK ══════════════
+function fillUbNames(){
+  const type=document.querySelector('input[name="ub-type"]:checked').value;
+  const names=[...new Set(db.books.filter(b=>b.type===type).map(b=>b.name))].sort();
+  setOpts('ub-name',names,'— Select —');
+  el('ub-rest').style.display='none';
+}
+function onUbType(){fillUbNames();}
+function onUbName(){
+  const name=el('ub-name').value,type=document.querySelector('input[name="ub-type"]:checked').value;
+  if(!name){el('ub-rest').style.display='none';return;}
+  const bks=db.books.filter(b=>b.name===name&&b.type===type);
+  el('ub-serial').innerHTML=`<option value="">— Select Serial No —</option>`+bks.map(b=>`<option value="${b.serial}">${b.serial} (${b.status})</option>`).join('');
+  el('ub-rest').style.display='block';hideErr('ub-err');
+}
+function submitUpdBook(){
+  const name=el('ub-name').value,serial=el('ub-serial').value,status=el('ub-status').value,dt=el('ub-dt').value;
+  hideErr('ub-err');
+  if(!name||!serial||!status||!dt){showErr('ub-err','All fields are mandatory. Please complete the form before submitting.');return;}
+  const bk=db.books.find(b=>b.serial===serial);
+  if(bk)bk.status=status;
+  renderBooks();renderMovies();rebuildDrops();buildDash();
+  toast('✅',`${serial} status updated to "${status}".`);
+}
+
+// ══════════════ USER MANAGEMENT ══════════════
+function toggleUmgMode(){
+  const mode=document.querySelector('input[name="umg-mode"]:checked').value;
+  el('umg-ex-row').style.display=mode==='existing'?'block':'none';
+  if(mode==='existing'){
+    el('umg-sel').innerHTML=`<option value="">— Select —</option>`+db.users.map(u=>`<option value="${u.id}">${u.id} – ${u.name}</option>`).join('');
+  } else resetUmg();
+}
+function loadUserEdit(){
+  const uid=el('umg-sel').value;const u=db.users.find(x=>x.id===uid);if(!u)return;
+  el('umg-name').value=u.name;el('umg-uid').value=u.id;el('umg-pwd').value=u.pwd;
+  el('umg-active').checked=u.active;el('umg-admin').checked=u.isAdmin;
+}
+function resetUmg(){['umg-name','umg-uid','umg-pwd'].forEach(id=>el(id).value='');el('umg-active').checked=true;el('umg-admin').checked=false;hideErr('umg-err');}
+function submitUserMgmt(){
+  const mode=document.querySelector('input[name="umg-mode"]:checked').value;
+  const name=gv('umg-name'),uid=gv('umg-uid'),pwd=gv('umg-pwd');
+  const active=el('umg-active').checked,isAdmin=el('umg-admin').checked;
+  hideErr('umg-err');
+  if(!name){showErr('umg-err','Name is mandatory.');return;}
+  if(!uid){showErr('umg-err','User ID is mandatory.');return;}
+  if(!pwd){showErr('umg-err','Password is mandatory.');return;}
+  if(mode==='new'){
+    if(db.users.find(u=>u.id===uid)){showErr('umg-err',`User ID "${uid}" already exists.`);return;}
+    db.users.push({id:uid,pwd,name,isAdmin,active});
+    toast('✅',`User "${uid}" created.`);
+  } else {
+    const u=db.users.find(x=>x.id===uid);if(!u){showErr('umg-err','User not found.');return;}
+    u.name=name;u.pwd=pwd;u.active=active;u.isAdmin=isAdmin;
+    toast('✅',`User "${uid}" updated.`);
+  }
+  renderUsers();resetUmg();
+}
+function renderUsers(){
+  el('umg-tb').innerHTML=db.users.map(u=>`<tr><td>${u.id}</td><td>${u.name}</td><td>${u.isAdmin?bdg('Admin','by'):bdg('User','bb')}</td><td>${u.active?bdg('Active','bg'):bdg('Inactive','br')}</td></tr>`).join('');
+}
+
+// ══════════════ DASHBOARD ══════════════
+function buildDash(){
+  const total=db.books.length, avail=db.books.filter(b=>b.status==='Available').length;
+  const issued=db.issues.filter(i=>!i.returned).length, members=db.members.filter(m=>m.status==='Active').length;
+  const ov=overdueList().length;
+  el('dash-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Total Items</div><div class="stat-value">${total}</div><div class="stat-sub">Books &amp; Movies</div></div>
+    <div class="stat-card"><div class="stat-label">Available Now</div><div class="stat-value">${avail}</div><div class="stat-sub">Ready to issue</div></div>
+    <div class="stat-card"><div class="stat-label">Active Issues</div><div class="stat-value">${issued}</div><div class="stat-sub">Currently out</div></div>
+    <div class="stat-card"><div class="stat-label">Active Members</div><div class="stat-value">${members}</div><div class="stat-sub">Valid memberships</div></div>
+    ${CU.isAdmin?`<div class="stat-card"><div class="stat-label" style="color:#e74c3c">Overdue</div><div class="stat-value" style="color:#e74c3c">${ov}</div><div class="stat-sub">Late returns</div></div>`:''}
+  `;
+  const txn=[
+    {i:'🔍',t:'Book Available',  s:'Check availability',    p:'book-avail'},
+    {i:'📤',t:'Issue Book',      s:'Issue to a member',     p:'book-issue'},
+    {i:'📥',t:'Return Book',     s:'Process a return',      p:'return-book'},
+    {i:'💰',t:'Pay Fine',        s:'Clear outstanding fine', p:'pay-fine'},
+  ];
+  const rep=[
+    {i:'📋',t:'Books List',      s:'Master catalogue',      p:'rpt-books'},
+    {i:'🎬',t:'Movies List',     s:'All movies',            p:'rpt-movies'},
+    {i:'👥',t:'Memberships',     s:'All members',           p:'rpt-members'},
+    {i:'📌',t:'Active Issues',   s:'Currently issued',      p:'rpt-active'},
+    {i:'⚠️',t:'Overdue Returns', s:'Late returns',          p:'rpt-overdue'},
+  ];
+  const adm=CU.isAdmin?[
+    {i:'➕',t:'Add Membership',  s:'New member',            p:'add-mem'},
+    {i:'✏️',t:'Upd Membership',  s:'Extend / cancel',       p:'upd-mem'},
+    {i:'📗',t:'Add Book/Movie',  s:'Add to catalogue',      p:'add-book'},
+    {i:'🔄',t:'Upd Book/Movie',  s:'Update item status',    p:'upd-book'},
+    {i:'👤',t:'User Management', s:'Manage system users',   p:'user-mgmt'},
+  ]:[];
+  el('dash-menu').innerHTML=[...txn,...rep,...adm].map(m=>`
+    <div class="menu-card" onclick="showPage('${m.p}')">
+      <div class="mc-icon">${m.i}</div>
+      <div class="mc-title">${m.t}</div>
+      <div class="mc-sub">${m.s}</div>
+    </div>`).join('');
+}
+
+// Enter key on login
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&el('screen-login').classList.contains('active'))doLogin();});
+
+/*
+  ASSUMPTIONS (per spec: "please highlight"):
+  1. Fine rate = ₹10/day overdue (standard library fine).
+  2. User login rejects admin accounts; Admin login rejects non-admin accounts (separate sessions).
+  3. Return Date on Return Book page can be edited to any date (earlier OR later than scheduled per spec).
+  4. Books and Movies share one catalogue; type tracked per record.
+  5. Membership IDs auto-generated sequentially (MEM001, MEM002…).
+  6. Serial numbers auto-generated as [Category Prefix][B/M][6-digit number].
+  7. "Maintenance is mandatory to create reports and transactions" — implemented: books/members must exist before transactions work.
+*/
+</script>
+</body>
+</html>
